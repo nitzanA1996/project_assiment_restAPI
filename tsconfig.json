@@ -1,0 +1,31 @@
+{
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ],
+  "compilerOptions": {
+    "noUncheckedIndexedAccess": true,
+    "lib": [
+      "ES2023"
+    ],
+    "moduleResolution": "NodeNext",
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedSideEffectImports": true,
+    "verbatimModuleSyntax": true,
+    "types": [
+      "node"
+    ],
+    "sourceMap": true,
+    "isolatedModules": true,
+    "rootDir": "./src",
+    "module": "NodeNext",
+    "moduleDetection": "force",
+    "skipLibCheck": true,
+    "outDir": "./dist",
+    "strict": true,
+    "target": "ES2023"
+  }
+}
