@@ -26,6 +26,9 @@ export const errorHandler: ErrorRequestHandler = (error: unknown, _request, resp
   response.locals.errorMessage = normalized.message;
   if (normalized.status >= 500) console.error("An unexpected request error occurred.");
   response.status(normalized.status).json({
-    error: { code: normalized.code, message: normalized.message },
+    error: {
+      code: normalized.code, message: normalized.message,
+      ...(normalized.details ? { details: normalized.details } : {}),
+    },
   });
 };

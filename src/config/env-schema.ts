@@ -24,6 +24,10 @@ export const envSchema = z.object({
   MONGODB_ATLAS_URI: z.string().optional(),
   MONGODB_DB_NAME: z.string().regex(/^[A-Za-z0-9_-]+$/).default("business_cards"),
   CORS_ORIGINS: origins,
+  JWT_SECRET: z.string().min(32).refine((value) => value.trim().length >= 32, "Use a random signing secret"),
+  JWT_EXPIRES_IN: z.string().regex(/^[1-9]\d*[smhd]$/).default("1h")
+    .transform((value) => Number(value.slice(0, -1)) * ({ s: 1, m: 60, h: 3600, d: 86400 }[value.slice(-1)] ?? 0))
+    .pipe(z.number().int().min(1).max(604800)),
 }).superRefine((value, context) => {
   const key = value.DB_TARGET === "atlas" ? "MONGODB_ATLAS_URI" : "MONGODB_LOCAL_URI";
   if (!mongoUri.safeParse(value[key]).success) {

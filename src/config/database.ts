@@ -13,8 +13,17 @@ export async function connectDatabase(env: Environment): Promise<void> {
 
   try {
     await mongoose.connect(uri, { dbName: env.MONGODB_DB_NAME, serverSelectionTimeoutMS: 10000 });
-  } catch {
-    throw new Error("MongoDB connection failed. Check the URI, credentials, network and Atlas IP access list.");
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "";
+    let hint = "Check the URI, credentials, network and Atlas IP access list.";
+    if (/bad auth|authentication failed/i.test(message)) {
+      hint = "Authentication was rejected. Check the database username and password.";
+    } else if (/ENOTFOUND|querySrv|queryTxt|EAI_AGAIN/i.test(message)) {
+      hint = "DNS lookup failed. Check the cluster hostname and network DNS access.";
+    } else if (/IP|server selection|ECONNREFUSED|ETIMEDOUT/i.test(message)) {
+      hint = "The cluster could not be reached. Check network access and the Atlas IP access list.";
+    }
+    throw new Error(`MongoDB connection failed. ${hint}`);
   }
 }
 

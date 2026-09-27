@@ -10,7 +10,8 @@ let baseUrl;
 let ready = true;
 
 before(async () => {
-  const app = createApp({ allowedOrigins: ['http://localhost:5173'], isReady: () => ready });
+  const app = createApp({ allowedOrigins: ['http://localhost:5173'], isReady: () => ready,
+    tokenConfig: { JWT_SECRET: 'test-only-signing-secret-of-32-characters', JWT_EXPIRES_IN: 3600 } });
   server = app.listen(0, '127.0.0.1');
   await once(server, 'listening');
   baseUrl = `http://127.0.0.1:${server.address().port}`;

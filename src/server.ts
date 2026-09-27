@@ -2,10 +2,26 @@ import type { Server } from "node:http";
 import { createApp } from "./app.js";
 import type { Environment } from "./config/env-schema.js";
 import { connectDatabase, disconnectDatabase, isDatabaseConnected } from "./config/database.js";
+import { User } from "./users/user.model.js";
+import { Card } from "./cards/card.model.js";
 
 export async function startServer(env: Environment): Promise<Server> {
   await connectDatabase(env);
-  const app = createApp({ allowedOrigins: env.CORS_ORIGINS, isReady: isDatabaseConnected });
+  try {
+    await User.init();
+    await Card.init();
+  } catch (error) {
+    await disconnectDatabase();
+    const code = typeof error === "object" && error !== null && "code" in error && typeof error.code === "number"
+      ? error.code : "unknown";
+    const message = error instanceof Error ? error.message : "";
+    const reason = /not authorized|unauthorized|not allowed/i.test(message)
+      ? "Database user lacks permission to create collections or indexes."
+      : /too long|length/i.test(message) ? "The database name exceeds the cluster limit."
+      : "Check database permissions and existing duplicate emails or business numbers.";
+    throw new Error(`Database storage initialization failed (code: ${code}). ${reason}`);
+  }
+  const app = createApp({ allowedOrigins: env.CORS_ORIGINS, isReady: isDatabaseConnected, tokenConfig: env });
   try {
     return await new Promise<Server>((resolve, reject) => {
       const server = app.listen(env.PORT, () => {

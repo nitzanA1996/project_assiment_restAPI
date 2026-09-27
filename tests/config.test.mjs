@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { parseEnvironment } from '../dist/config/env-schema.js';
 
-const base = { DB_TARGET: 'local', MONGODB_LOCAL_URI: 'mongodb://127.0.0.1:27017/test' };
+const base = { DB_TARGET: 'local', MONGODB_LOCAL_URI: 'mongodb://127.0.0.1:27017/test', JWT_SECRET: 'test-only-signing-secret-of-32-characters' };
 
 test('local configuration does not require Atlas credentials', () => {
   const result = parseEnvironment(base);
@@ -13,7 +13,7 @@ test('local configuration does not require Atlas credentials', () => {
 test('Atlas is selected explicitly and requires its own URI', () => {
   assert.throws(() => parseEnvironment({ ...base, DB_TARGET: 'atlas' }), /MONGODB_ATLAS_URI/);
   const result = parseEnvironment({
-    DB_TARGET: 'atlas', MONGODB_ATLAS_URI: 'mongodb+srv://example.invalid/',
+    ...base, DB_TARGET: 'atlas', MONGODB_ATLAS_URI: 'mongodb+srv://example.invalid/',
     MONGODB_DB_NAME: 'isolated_test',
   });
   assert.equal(result.MONGODB_DB_NAME, 'isolated_test');
@@ -24,7 +24,7 @@ test('malformed configuration is rejected without exposing values', () => {
     assert.throws(() => parseEnvironment({ ...base, PORT }), /configuration: PORT/);
   }
   const secret = 'mongodb+srv://user:[private@host](mailto:private@host)/';
-  assert.throws(() => parseEnvironment({ DB_TARGET: 'atlas', MONGODB_ATLAS_URI: secret }),
+  assert.throws(() => parseEnvironment({ ...base, DB_TARGET: 'atlas', MONGODB_ATLAS_URI: secret }),
     (error) => error.message.includes('MONGODB_ATLAS_URI') && !error.message.includes('private'));
   assert.throws(() => parseEnvironment({ ...base, NODE_ENV: 'unknown' }), /NODE_ENV/);
 });

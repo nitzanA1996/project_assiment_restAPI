@@ -5,10 +5,13 @@ import { errorHandler } from "./middleware/error-handler.js";
 import { notFound } from "./middleware/not-found.js";
 import { requestLogger } from "./shared/logger/request-logger.js";
 import { AppError } from "./shared/errors/app-error.js";
+import { createUserRouter } from "./users/user.routes.js";
+import type { TokenConfig } from "./shared/security/token.js";
 
 interface AppOptions {
   allowedOrigins: string[];
   isReady: () => boolean;
+  tokenConfig: TokenConfig;
 }
 
 export function createApp(options: AppOptions) {
@@ -33,6 +36,7 @@ export function createApp(options: AppOptions) {
     response.status(ready ? 200 : 503).json({ status: ready ? "ready" : "unavailable" });
   });
 
+  app.use("/users", createUserRouter(options.tokenConfig));
   app.use(notFound);
   app.use(errorHandler);
   return app;
