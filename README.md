@@ -83,8 +83,15 @@ missing records `404`, and duplicate email or business number `409`. Errors are 
 
 ## Initial data
 
-Set `SEED_PASSWORD` and a different `SEED_ADMIN_PASSWORD` in your private `.env`, then run
-`npm run seed`. This creates `demo.regular@example.com`, `demo.business@example.com` and
-`demo.admin@example.com`. The first two use `SEED_PASSWORD`; the admin uses
-`SEED_ADMIN_PASSWORD`. Three sample cards belong to the business user.
+Run `npm run seed` to create `demo.regular@example.com`, `demo.business@example.com` and
+`demo.admin@example.com`, plus three cards owned by the business user. In development,
+the default passwords are `DemoUser123!` for regular/business users and `DemoAdmin123!` for
+the admin. Set `SEED_PASSWORD` and `SEED_ADMIN_PASSWORD` in your private `.env` to override
+them; both values are required when `NODE_ENV=production`.
 The seed can be rerun: existing sample records are left unchanged, and unrelated records are not removed.
+Existing account passwords are not reset if you change the seed password settings later.
+For a public deployment, set `NODE_ENV=production` and use your own seed passwords.
+
+Open `requests.http` with the VS Code REST Client extension to send example requests directly
+from the editor. Run the relevant login request before protected requests; REST Client reuses
+the token from its response. If you used custom seed passwords, enter those when prompted.

@@ -1,0 +1,71 @@
+# VS Code REST Client: run npm run seed, then npm run dev.
+# Run each login request before the protected requests that use its token.
+# If this database was seeded with custom passwords, enter those at the prompts.
+# Three wrong passwords lock an account for 24 hours.
+@baseUrl = http://localhost:3000
+@sampleCardId = 660000000000000000000201
+
+### Server health
+GET {{baseUrl}}/health
+
+### Public cards
+GET {{baseUrl}}/cards
+
+### One seeded card
+GET {{baseUrl}}/cards/{{sampleCardId}}
+
+### Business login
+# @name businessLogin
+# @prompt password Business seed password (default: DemoUser123!)
+POST {{baseUrl}}/users/login
+Content-Type: application/json
+
+{
+  "email": "demo.business@example.com",
+  "password": "{{password}}"
+}
+
+### My cards (send Business login first)
+GET {{baseUrl}}/cards/my-cards
+Authorization: Bearer {{businessLogin.response.body.$.token}}
+
+### Create a card (send Business login first)
+# @name createCard
+POST {{baseUrl}}/cards
+Authorization: Bearer {{businessLogin.response.body.$.token}}
+Content-Type: application/json
+
+{
+  "title": "REST Client Example",
+  "subtitle": "Created from VS Code",
+  "description": "A sample card created with the REST Client extension.",
+  "phone": "0500000099",
+  "email": "rest-client@example.com",
+  "address": { "country": "Israel", "city": "Tel Aviv", "street": "Herzl", "houseNumber": 9 }
+}
+
+### Like the new card (send Create a card first)
+PATCH {{baseUrl}}/cards/{{createCard.response.body.$._id}}
+Authorization: Bearer {{businessLogin.response.body.$.token}}
+
+### Admin login
+# @name adminLogin
+# @prompt password Admin seed password (default: DemoAdmin123!)
+POST {{baseUrl}}/users/login
+Content-Type: application/json
+
+{
+  "email": "demo.admin@example.com",
+  "password": "{{password}}"
+}
+
+### List users (send Admin login first)
+GET {{baseUrl}}/users
+Authorization: Bearer {{adminLogin.response.body.$.token}}
+
+### Change the new card's business number (send Admin login and Create a card first)
+PATCH {{baseUrl}}/cards/{{createCard.response.body.$._id}}/biz-number
+Authorization: Bearer {{adminLogin.response.body.$.token}}
+Content-Type: application/json
+
+{ "bizNumber": 7654321 }
