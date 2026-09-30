@@ -1,4 +1,4 @@
-import jwt from "jsonwebtoken";
+import { SignJWT, jwtVerify } from "jose";
 import { z } from "zod";
 import { objectIdSchema } from "../schemas/common.schema.js";
 import { AppError } from "../errors/app-error.js";
@@ -25,16 +25,22 @@ export interface TokenUser {
 const issuer = "business-cards-api";
 const audience = "business-cards-client";
 
-export function issueToken(user: TokenUser, config: TokenConfig): string {
-  return jwt.sign({ _id: user._id, isBusiness: user.isBusiness, isAdmin: user.isAdmin }, config.JWT_SECRET, {
-    algorithm: "HS256", expiresIn: config.JWT_EXPIRES_IN, issuer, audience,
-  });
+export async function issueToken(user: TokenUser, config: TokenConfig): Promise<string> {
+  const key = new TextEncoder().encode(config.JWT_SECRET);
+  return new SignJWT({ _id: user._id, isBusiness: user.isBusiness, isAdmin: user.isAdmin })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime(Math.floor(Date.now() / 1000) + config.JWT_EXPIRES_IN)
+    .setIssuer(issuer)
+    .setAudience(audience)
+    .sign(key);
 }
 
-export function verifyToken(token: string, config: TokenConfig): TokenUser {
+export async function verifyToken(token: string, config: TokenConfig): Promise<TokenUser> {
   try {
-    const verified = jwt.verify(token, config.JWT_SECRET, { algorithms: ["HS256"], issuer, audience });
-    return claimsSchema.parse(verified);
+    const key = new TextEncoder().encode(config.JWT_SECRET);
+    const { payload } = await jwtVerify(token, key, { algorithms: ["HS256"], issuer, audience });
+    return claimsSchema.parse(payload);
   } catch {
     throw new AppError(401, "INVALID_TOKEN", "The access token is invalid or expired.");
   }

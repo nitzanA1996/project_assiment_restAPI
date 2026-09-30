@@ -9,7 +9,7 @@ export function authenticate(config: TokenConfig): RequestHandler {
     const authorization = request.get("Authorization");
     const match = authorization?.match(/^Bearer ([^\s]+)$/i);
     if (!match?.[1]) throw new AppError(401, "AUTH_REQUIRED", "A Bearer access token is required.");
-    const claims = verifyToken(match[1], config);
+    const claims = await verifyToken(match[1], config);
     const user = await User.findById(claims._id);
     if (!user) throw new AppError(401, "INVALID_TOKEN", "The access token is invalid or expired.");
     // Authorization always uses current database roles, never stale token flags.

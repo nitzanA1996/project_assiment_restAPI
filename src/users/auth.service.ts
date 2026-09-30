@@ -5,6 +5,7 @@ import { hashPassword, verifyPassword } from "../shared/security/password.js";
 import { issueToken } from "../shared/security/token.js";
 import type { TokenConfig } from "../shared/security/token.js";
 import { AppError } from "../shared/errors/app-error.js";
+import { assertLoginNotLocked, recordFailedLogin, resetLoginFailures } from "./login-lock.service.js";
 
 export async function registerUser(input: RegisterUserInput) {
   const password = await hashPassword(input.password);
@@ -19,12 +20,19 @@ export async function registerUser(input: RegisterUserInput) {
   }
 }
 
-export async function loginUser(input: LoginInput, config: TokenConfig) {
-  const user = await User.findOne({ email: input.email }).select("+password");
-  if (!user || !await verifyPassword(input.password, user.password)) {
+export async function loginUser(input: LoginInput, config: TokenConfig, now = () => new Date()) {
+  const user = await User.findOne({ email: input.email }).select("+password +lockUntil");
+  if (!user) {
     throw new AppError(401, "INVALID_CREDENTIALS", "Invalid email or password.");
   }
-  return { token: issueToken({
-    _id: user._id.toString(), isBusiness: user.isBusiness, isAdmin: user.isAdmin,
+  const attemptedAt = now();
+  assertLoginNotLocked(user.lockUntil, attemptedAt);
+  if (!await verifyPassword(input.password, user.password)) {
+    await recordFailedLogin(user.id, attemptedAt);
+    throw new AppError(401, "INVALID_CREDENTIALS", "Invalid email or password.");
+  }
+  const currentUser = await resetLoginFailures(user.id, attemptedAt);
+  return { token: await issueToken({
+    _id: currentUser._id.toString(), isBusiness: currentUser.isBusiness, isAdmin: currentUser.isAdmin,
   }, config) };
 }

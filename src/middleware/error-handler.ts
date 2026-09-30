@@ -24,6 +24,9 @@ export const errorHandler: ErrorRequestHandler = (error: unknown, _request, resp
   }
   const normalized = normalizeError(error);
   response.locals.errorMessage = normalized.message;
+  if (normalized.retryAfterSeconds !== undefined) {
+    response.setHeader("Retry-After", String(normalized.retryAfterSeconds));
+  }
   if (normalized.status >= 500) console.error("An unexpected request error occurred.");
   response.status(normalized.status).json({
     error: {
