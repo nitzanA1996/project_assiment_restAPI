@@ -35,7 +35,7 @@ Send JSON with `Content-Type: application/json`. Register with `POST /users`:
 
 Log in with `POST /users/login` and `{ "email": "test@example.com", "password": "ExamplePass1!" }`.
 The response is `{ "token": "..." }`. Send it as `Authorization: Bearer <token>` on protected routes.
-The example password is illustrative; no account is created automatically yet.
+The example password is illustrative; registration never creates accounts automatically.
 Public registration cannot set `isAdmin`. Passwords are stored as bcrypt hashes and are never returned.
 
 ## Endpoints
@@ -81,4 +81,10 @@ missing records `404`, and duplicate email or business number `409`. Errors are 
   attempts during the lock return `429` with a `Retry-After` header. A successful login
   before the third failure resets the count.
 
-The initial data requirement (three users and three cards) is the next implementation step.
+## Initial data
+
+Set `SEED_PASSWORD` and a different `SEED_ADMIN_PASSWORD` in your private `.env`, then run
+`npm run seed`. This creates `demo.regular@example.com`, `demo.business@example.com` and
+`demo.admin@example.com`. The first two use `SEED_PASSWORD`; the admin uses
+`SEED_ADMIN_PASSWORD`. Three sample cards belong to the business user.
+The seed can be rerun: existing sample records are left unchanged, and unrelated records are not removed.
